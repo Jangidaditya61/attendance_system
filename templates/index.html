@@ -1,69 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Form</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-        select, input[type="file"], input[type="submit"] {
-            margin-top: 5px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s;
-        }
-        input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-        .info-box {
-            background-color: #e7f3fe;
-            border-left: 6px solid #2196F3;
-            margin-bottom: 15px;
-            padding: 10px;
-            font-size: 14px;
-        }
-        @media (max-width: 600px) {
-            .container {
-                margin: 10px;
-                padding: 15px;
-            }
-        }
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Attendance Form</title>
+        <link rel="stylesheet" href="static/style.css">
+    </head>
 <body>
     <div class="container">
         <h1>Attendance Form</h1>
@@ -86,7 +28,11 @@
                 <option value="Back-Office">Back-Office</option>
             </select>
 
-            <label for="image">Image:</label>
+            <div class="camera-container">
+                <video id="camera-feed" autoplay playsinline></video>
+                <button id="capture-button">Take Photo</button>
+                <canvas id="canvas" style="display:none;"></canvas>
+            </div>
             <input type="file" id="image" name="image" accept="image/*" required>
 
             <input type="hidden" id="latitude" name="latitude">
@@ -174,6 +120,44 @@
             alert('An error occurred. Please try again.');
         });
     }
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('camera-feed');
+        const captureButton = document.getElementById('capture-button');
+        const canvas = document.getElementById('canvas');
+        const imageDataInput = document.getElementById('image-data');
+    
+        // Request camera access
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                })
+                .catch(function(error) {
+                    console.error("Camera error: ", error);
+                    alert("Unable to access the camera. Please ensure you've granted camera permissions.");
+                });
+        } else {
+            alert("Sorry, your browser doesn't support accessing the camera.");
+        }
+    
+        // Capture image when button is clicked
+        captureButton.addEventListener('click', function() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            imageDataInput.value = canvas.toDataURL('image/jpeg');
+            alert("Photo captured!");
+        });
+    
+        // Modify your existing submitForm function
+        function submitForm() {
+            if (!imageDataInput.value) {
+                alert("Please take a photo before submitting.");
+                return;
+            }
+            // Rest of your submitForm logic...
+        }
+    });
     </script>
 </body>
 </html>
