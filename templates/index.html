@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        select, input[type="file"], input[type="submit"] {
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .info-box {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance Form</h1>
+        <form id="attendanceForm" enctype="multipart/form-data">
+            <label for="name">Choose Your Name:</label>
+            <select name="name" id="name" required>
+                <option value="">Select your name</option>
+                <option value="Aditya Jangid">Aditya Jangid</option>
+                <option value="Rohit G">Rohit G</option>
+                <option value="Saurav Kothale">Saurav Kothale</option>
+                <option value="Back-Office">Back-Office</option>
+            </select>
+
+            <label for="city">Choose Your City:</label>
+            <select name="city" id="city" required>
+                <option value="">Select your city</option>
+                <option value="Surat">Surat</option>
+                <option value="Ahmedabad">Ahmedabad</option>
+                <option value="Vadodara">Vadodara</option>
+                <option value="Back-Office">Back-Office</option>
+            </select>
+
+            <label for="image">Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+
+            <div class="info-box">
+                <p><strong>Date & Time:</strong> <span id="currentDateTime"></span></p>
+                <p><strong>Location:</strong> <span id="location_name">Fetching location...</span></p>
+            </div>
+
+            <input type="submit" value="Submit Attendance">
+        </form>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(function(position) {
+                document.getElementById('latitude').value = position.coords.latitude;
+                document.getElementById('longitude').value = position.coords.longitude;
+                fetchLocationName(position.coords.latitude, position.coords.longitude);
+            }, function(error) {
+                console.error("Error: " + error.message);
+                document.getElementById('location_name').textContent = "Location unavailable";
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        } else {
+            document.getElementById('location_name').textContent = "Geolocation not supported";
+        }
+
+        document.getElementById('attendanceForm').onsubmit = function(e) {
+            e.preventDefault();
+            submitForm();
+        };
+    });
+
+    function updateDateTime() {
+        const now = new Date();
+        const formattedDateTime = now.toLocaleString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        document.getElementById('currentDateTime').textContent = formattedDateTime;
+    }
+
+    function fetchLocationName(lat, lon) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.display_name) {
+                    document.getElementById('location_name').textContent = data.display_name;
+                } else {
+                    document.getElementById('location_name').textContent = "Location name not found";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('location_name').textContent = "Location name unavailable";
+            });
+    }
+
+    function submitForm() {
+        var formData = new FormData(document.getElementById('attendanceForm'));
+        fetch('/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            document.getElementById('attendanceForm').reset();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+    </script>
+</body>
+</html>
